@@ -1,0 +1,36 @@
+{
+  "id": "trivia",
+  "kind": "game",
+  "name": "Trivia Night",
+  "version": "0.1.0",
+  "image": "ghcr.io/thezigpc/trivia-night:0.1.0",
+  "port": 3010,
+  "sdk": { "version": "0.15.0", "level": 3 },
+  "routing": { "basePath": true },
+  "routes": {
+    "player": "/",
+    "table": "/room/{code}?role=table",
+    "host": "/host",
+    "admin": "/admin"
+  },
+  "health": "/health",
+  "events": [
+    "room_created",
+    "room_closed",
+    "players_changed",
+    "round_started",
+    "round_ended",
+    "winner",
+    "game_over",
+    "x-trivia-question",
+    "x-trivia-answer-revealed",
+    "x-trivia-round-answers",
+    "x-trivia-standings"
+  ],
+  "commands": ["create_room", "start", "pause", "resume", "next_round", "end", "host_link", "cohost_link", "remove_cohost"],
+  "brandable": ["displayName", "tagline"],
+  "sessionKinds": ["venue", "patron", "private"],
+  "resources": { "memory": "256m", "cpus": 1 },
+  "network": { "internet": false },
+  "env": { "DATA_DIR": "/data" }
+}

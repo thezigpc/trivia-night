@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+*.log
+data/
+*.pem
+credentials.json
+
+# Private, machine-specific notes
+CLAUDE.local.md

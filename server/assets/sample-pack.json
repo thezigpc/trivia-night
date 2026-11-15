@@ -1,0 +1,41 @@
+{
+  "name": "Sample pack",
+  "description": "A short starter pack written for Trivia Night: four rounds, a wager final and a tie-breaker. Upload your own packs in the admin.",
+  "questions": [
+    { "category": "General Knowledge", "question": "How many sides does a hexagon have?", "answer": "6", "accept": ["six"] },
+    { "category": "General Knowledge", "question": "Without jokers, how many cards are in a standard deck of playing cards?", "answer": "52", "accept": ["fifty-two", "fifty two"] },
+    { "category": "General Knowledge", "question": "Which colour do you get by mixing blue and yellow paint?", "answer": "Green", "type": "choice", "choices": ["Purple", "Green", "Orange", "Brown"] },
+    { "category": "General Knowledge", "question": "True or false: a year with 366 days is called a leap year.", "answer": "True", "type": "truefalse" },
+    { "category": "General Knowledge", "question": "What is a baby kangaroo called?", "answer": "Joey" },
+    { "category": "General Knowledge", "question": "How many minutes are there in three hours?", "answer": "180", "accept": ["one hundred eighty", "one hundred and eighty"] },
+    { "category": "General Knowledge", "question": "Which instrument usually has 88 keys?", "answer": "Piano", "type": "choice", "choices": ["Organ", "Accordion", "Piano", "Harpsichord"] },
+    { "category": "General Knowledge", "question": "What do you call a word that reads the same backwards as forwards, such as \"level\"?", "answer": "Palindrome", "note": "Also accept \"palindromic word\"." },
+
+    { "category": "Science & Nature", "question": "Which gas do plants take in from the air to make their food?", "answer": "Carbon dioxide", "accept": ["CO2"] },
+    { "category": "Science & Nature", "question": "Which planet is closest to the Sun?", "answer": "Mercury", "type": "choice", "choices": ["Venus", "Mercury", "Mars", "Earth"] },
+    { "category": "Science & Nature", "question": "True or false: bats are mammals.", "answer": "True", "type": "truefalse" },
+    { "category": "Science & Nature", "question": "What is the hardest natural substance?", "answer": "Diamond", "accept": ["diamonds"] },
+    { "category": "Science & Nature", "question": "How many legs does a spider have?", "answer": "8", "accept": ["eight"] },
+    { "category": "Science & Nature", "question": "At sea level, water boils at how many degrees Celsius?", "answer": "100", "accept": ["one hundred"] },
+    { "category": "Science & Nature", "question": "Which organ pumps blood around the human body?", "answer": "Heart" },
+    { "category": "Science & Nature", "question": "What is the chemical symbol for gold?", "answer": "Au", "note": "Two letters: A, U." },
+
+    { "category": "Geography", "question": "What is the largest ocean on Earth?", "answer": "Pacific", "accept": ["Pacific Ocean"] },
+    { "category": "Geography", "question": "On which continent is the Sahara Desert?", "answer": "Africa" },
+    { "category": "Geography", "question": "What is the capital city of Canada?", "answer": "Ottawa", "type": "choice", "choices": ["Toronto", "Ottawa", "Vancouver", "Montreal"] },
+    { "category": "Geography", "question": "True or false: the river Nile flows into the Mediterranean Sea.", "answer": "True", "type": "truefalse" },
+    { "category": "Geography", "question": "In which country is the city of Kyoto?", "answer": "Japan" },
+    { "category": "Geography", "question": "By the most common count, how many continents are there?", "answer": "7", "accept": ["seven"] },
+    { "category": "Geography", "question": "What is the highest mountain above sea level?", "answer": "Mount Everest", "accept": ["Everest", "Mt Everest", "Mt. Everest"] },
+    { "category": "Geography", "question": "Which US state is made up entirely of islands?", "answer": "Hawaii" },
+
+    { "category": "Pictures", "question": "Which country's flag is this?", "answer": "Japan", "image": "sample-flag.svg" },
+    { "category": "Pictures", "question": "Which planet does this picture show?", "answer": "Saturn", "image": "sample-planet.svg" },
+    { "category": "Pictures", "question": "What time does this clock show?", "answer": "3 o'clock", "accept": ["3:00", "3", "three", "three o'clock", "15:00"], "image": "sample-clock.svg" },
+    { "category": "Pictures", "question": "How many triangles can you count in this picture?", "answer": "5", "accept": ["five"], "image": "sample-triangles.svg", "note": "Four small ones plus the big one." },
+
+    { "category": "World Rivers", "question": "Which is the largest river in South America by the amount of water it carries?", "answer": "Amazon", "accept": ["Amazon River", "the Amazon"], "use": "final" },
+
+    { "category": "Tie-breaker", "question": "In what year did people first walk on the Moon?", "answer": "1969", "type": "number", "use": "tiebreaker" }
+  ]
+}
