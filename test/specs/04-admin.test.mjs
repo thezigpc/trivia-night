@@ -33,6 +33,16 @@ const api = async (path, { method = "GET", body, auth = true } = {}) => {
   return { status: r.status, body: json };
 };
 
+/** Polls until fn() is true (background saves). */
+async function until(fn, label, ms = 3000) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    if (await fn()) return;
+    await new Promise((r) => setTimeout(r, 25));
+  }
+  throw new Error(`timed out: ${label}`);
+}
+
 // A 1x1 PNG.
 const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 
@@ -120,6 +130,18 @@ describe("admin", () => {
     assert.ok(!(await api("/overview")).body.packs.some((p) => p.id === id));
   });
 
+  test("a big pack (well over 16 KB) uploads through the kit's admin router (bodyLimit)", async () => {
+    const rows = ["question,answer,category"];
+    for (let i = 1; i <= 400; i++) rows.push(`Big question number ${i} with some padding text to make it longer?,Answer ${i},Bulk`);
+    const text = rows.join("\n");
+    assert.ok(Buffer.byteLength(text) > 30_000);
+    const saved = await api("/upload/packs", { method: "POST", body: { text, name: "Bulk Pack" } });
+    assert.equal(saved.status, 200, JSON.stringify(saved.body).slice(0, 200));
+    const pack = (await api("/overview")).body.packs.find((p) => p.id === saved.body.id);
+    assert.equal(pack.count, 400);
+    assert.equal((await api(`/packs/${saved.body.id}`, { method: "DELETE" })).status, 200);
+  });
+
   test("pictures: images upload and serve safely; SVG and junk are refused", async () => {
     const up = await api("/upload/pictures", { method: "POST", body: { name: "My Photo.PNG", data: PNG } });
     assert.equal(up.status, 200, JSON.stringify(up.body));
@@ -150,6 +172,8 @@ describe("admin", () => {
     await host.ok("addTeam", "Trivia Newton John");
     await host.ok("start");
     await host.ok("finish");
+    // The night's teams are saved in the background after finishing.
+    await until(async () => (await (await fetch(`${server.url}/api/teams`)).json()).teams.length === 2, "teams saved");
     const known = await (await fetch(`${server.url}/api/teams`)).json();
     assert.deepEqual(known.teams.sort(), ["Quiz Khalifa", "Trivia Newton John"]);
 
@@ -168,6 +192,7 @@ describe("admin", () => {
     await host3.ok("addTeam", "Quiz Kalifa");
     await host3.ok("start");
     await host3.ok("finish");
+    await until(async () => (await api("/overview")).body.teams.some((t) => t.name === "Quiz Kalifa"), "Quiz Kalifa saved");
     let teams = (await api("/overview")).body.teams;
     assert.ok(teams.some((t) => t.name === "Quiz Kalifa"));
     const merged = await api("/teams/rename", { method: "POST", body: { from: "Quiz Kalifa", to: "quiz khalifa" } });

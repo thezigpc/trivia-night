@@ -62,8 +62,13 @@ paths). Put them in a git-ignored `CLAUDE.local.md`.
   - `teams.ts`: known teams in `DATA_DIR/teams.json`. `canonicalTeamName` gives the saved
     spelling.
 - `server/src/admin/routes.ts`: the kit's admin auth and router.
-  - The **upload router** (`/api/admin/upload/*`) is mounted *before* the kit's router,
-    because the kit parses JSON with a 16 KB limit.
+  - **Uploads** (`/api/admin/upload/*`: packs and pictures) are routes on the kit's router,
+    which reads bodies up to `bodyLimit: "6mb"` (kit 0.9.0+; its default is 16 KB).
+  - **Results** report teams with `player.team: true` (SDK 0.16.0).
+- **On-screen keyboard** (GameKit 0.10.x, `<OnScreenKeyboard />` in `main.tsx`):
+  - Every field needs `maxLength` and a `<form>`. Fields that save on blur use `EnterForm`.
+  - Number fields use `NumInput` (`type="text"` + `inputMode`, never `type="number"`).
+  - Test with `?bg_keyboard=1` at 1080p and 4K.
 - `server/src/bargames.ts`: the only SDK connection (`wireBarGames` with `seats`, the
   commands and `create_room`).
 - `client/src/pages/`:

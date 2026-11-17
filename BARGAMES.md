@@ -8,10 +8,10 @@
 - `tableMode`, announcements and "← All games" / "← Box admin";
 - results with teams as players.
 
-- **SDK:** 0.15.0, vendored at `vendor/bargames-sdk-0.15.0.tgz`.
-- **GameKit:** 0.10.2 (since 0.1.1), vendored at `vendor/bargames-gamekit-0.10.2.tgz`.
-- **Manifest:** [bargames.json](bargames.json), `trivia` 0.1.1, port 3010, image
-  `ghcr.io/thezigpc/trivia-night:0.1.1`.
+- **SDK:** 0.16.0 (since 0.1.2), vendored at `vendor/bargames-sdk-0.16.0.tgz`.
+- **GameKit:** 0.10.6 (since 0.1.2), vendored at `vendor/bargames-gamekit-0.10.6.tgz`.
+- **Manifest:** [bargames.json](bargames.json), `trivia` 0.1.2, port 3010, image
+  `ghcr.io/thezigpc/trivia-night:0.1.2`.
 
 ```
 $ npx bargames validate .
@@ -82,9 +82,11 @@ At **Finish the night**, `bg.reportResults({ roomCode, results })` is sent once 
 team is one player:
 
 ```json
-{ "player": { "name": "The Smarty Pints" }, "place": 1, "score": 12 }
+{ "player": { "name": "The Smarty Pints", "team": true }, "place": 1, "score": 12 }
 ```
 
+- **Teams are marked** with `player.team: true` (SDK 0.16.0, since 0.1.2), so boards such as
+  Tournament & Leaderboard 0.4.1 keep team seasons apart from individual players.
 - **Places:** equal scores share a place, unless the tie-breaker separated them.
 - **Stable names:** a team's name is the venue's saved spelling. Every team that finishes a
   night is kept in `DATA_DIR/teams.json`. When teams are created (a phone joining, or the
@@ -183,7 +185,7 @@ The same browser walk-through passed standalone at the root (`http://localhost:<
 
 ## Tests
 
-`npm test`: **30 tests, all pass.**
+`npm test`: **31 tests, all pass** (0.1.2).
 
 | Spec | Covers |
 |---|---|
@@ -207,7 +209,7 @@ standalone. It covered:
 The results: no page errors, no 4xx/5xx, no request outside `/trivia`, and the TV never
 scrolls.
 
-## On-screen keyboard (0.1.1, GameKit 0.10.2)
+## On-screen keyboard (0.1.1; GameKit 0.10.6 since 0.1.2)
 
 Box 0.21.0 touchscreens have no keyboard, so the kit's `<OnScreenKeyboard />` is mounted once at
 the root (`client/src/main.tsx`). One app covers every page: join, host setup, the console, the
@@ -220,11 +222,15 @@ TV (which has no fields) and the admin. Phones, tablets and PCs never see it.
   the keyboard.
 
 **Number fields** (wagers, tie-breaker answers, score cells, timers, question counts) are
-`NumInput`:
-- a text field with `inputMode` (`numeric`, or `decimal` where "." is allowed);
-- `type="tel"` only while the on-screen keyboard is up.
+`NumInput`: `type="text"` with `inputMode` (`numeric`, or `decimal` where "." is allowed), as the
+kit's README advises. On phones that brings up their own number keyboard; on keyboard screens,
+the kit's number pad. 0.1.1 switched to `type="tel"` while the keyboard was up, to get around a
+kit bug that 0.10.3 fixed; 0.1.2 drops that workaround.
 
-That works around a kit bug (see SDK requests), and it keeps the phones' own decimal keyboard.
+**Dropdowns** (kit 0.10.6): on keyboard screens, tapping a `<select>` opens the kit's
+big-button list, titled with the field's label. Chromium's own pop-up can't be reached by
+touch there. Trivia's dropdowns are all labelled: setup, the night builder's pack and
+category, the console's settings, and the admin defaults.
 
 The number fields used to snap to their minimum when cleared. They now keep the typed text, so
 backspace-and-retype works.
@@ -239,9 +245,11 @@ backspace-and-retype works.
 **Checked** (scratchpad `e2e-keyboard.cjs`, mock box under `/trivia`, `?bg_keyboard=1`, every key
 tapped on the on-screen keyboard, at 1920×1080 and 3840×2160):
 - Host setup: the title, the timer (number pad, backspace and retype) and a round's question
-  count; Enter doesn't reload the page.
+  count; Enter doesn't reload the page. Two dropdowns (when answers go up, and a round's
+  category) open the kit's list, and the choice sticks (0.1.2).
 - A team joins from a kiosk: the room code and team name, then Enter.
-- An open answer sent with Enter.
+- An open answer sent with Enter. The answer box is focused automatically and opens the
+  keyboard by itself (kit 0.10.5, checked in 0.1.2).
 - The tie-breaker on the number pad, including ".".
 - A wager: too big gives a toast, shown above the keyboard; then a valid one.
 - The console's score grid: the number pad, and Enter saves.
@@ -250,26 +258,28 @@ tapped on the on-screen keyboard, at 1920×1080 and 3840×2160):
 - `?bg_keyboard=0` turns it off.
 
 Phones at 390 px without the flag show no keyboard, no padding and the same width. The 0.1.0
-walk-through still passes.
+walk-through still passes (re-run for 0.1.2).
 
 At 4K with a 1× device scale, the page keeps its CSS size, so it looks small, while the keyboard
 fills the width. A 4K touchscreen normally runs at 2× scale.
 
 ## SDK requests
 
-0. **GameKit 0.10.0-0.10.2: numeric fields get letters.** `OnScreenKeyboard` sets `inputmode="none"` on
+0. **Done in GameKit 0.10.3, adopted in 0.1.2. Numeric fields got letters (0.10.0-0.10.2).** `OnScreenKeyboard` sets `inputmode="none"` on
    focus and saves the original in `data-bg-inputmode`, but `wantsNumberPad()` reads
    `getAttribute("inputmode") ?? dataset.bgInputmode`. `"none"` isn't null, so the saved mode is
    never read: every `inputMode="numeric"`/`"decimal"` field gets the letter keyboard. Only
    `type="number"`/`"tel"` get the number pad. Fix: read `dataset.bgInputmode` first, or treat
    `"none"` as unset. The focus handler also never puts the original `inputmode` back on blur.
-   Trivia works around it with `type="tel"` while the keyboard is up.
-1. **GameKit `adminRouter`'s body limit** (done in kit 0.9.0; Trivia adopts it in a later version). It parses every request with
+   Trivia 0.1.1 worked around it with `type="tel"` while the keyboard was up.
+1. **Done in GameKit 0.9.0, adopted in 0.1.2: `adminRouter`'s body limit.** The uploads
+   (`/api/admin/upload/*`) now sit on the kit's router with `bodyLimit: "6mb"`, and a test
+   uploads a pack of over 30 KB. The original request: It parses every request with
    `express.json({ limit: "16kb" })`, so a game's own admin routes that take uploads
    (question packs, pictures) can't hang off it. Trivia mounts its own upload router ahead of
    it, with its own session check. An option (`bodyLimit`, or not parsing bodies for routes
    added after the kit's) would save the next game the workaround.
-2. **Team results.** `reportResults` has no way to say the "players" are teams. A
+2. **Done in SDK 0.16.0, adopted in 0.1.2 (`player.team: true`). Team results.** `reportResults` had no way to say the "players" are teams. A
    `player.kind: "team"` (or `team: true`) would let Tournament & Leaderboard keep team
    seasons apart from individual boards, and label them.
 3. **Reading results**, for automatic season import. Already queued, per the GameBroker
@@ -277,4 +287,5 @@ fills the width. A 4K touchscreen normally runs at 2× scale.
 4. **Rooms are in memory**, as in every game so far. A container restart (update, memory
    limit) ends a trivia night mid-game and loses its scores, which is worse here than in
    Bingo. Persisting a room snapshot to `/data` is the game's job; noted for a later
-   version. A box-side "don't update while a room is playing" guard would help every game.
+   version. A box-side "don't update while a room is playing" guard would help every game
+   (box 0.19.0 now refuses an update while a room has players).

@@ -1,5 +1,4 @@
 import { useEffect, useId, useState, type InputHTMLAttributes, type ReactNode } from "react";
-import { useOnScreenKeyboard } from "@bargames/gamekit/client";
 import QRCode from "qrcode";
 import type { TimerView } from "@trivia/shared";
 import { loadKnownTeams, pictureUrl } from "../socket";
@@ -117,14 +116,12 @@ export function TeamNameField({
 }
 
 /**
- * A number field. Phones, tablets and PCs get a text field with inputMode (their own number
- * keyboard, with "." when `decimal`). Where GameKit's on-screen keyboard is up, it's
- * type="tel": kit 0.10.0 sets inputmode="none" on focus and then reads that instead of the
- * saved mode, so an inputMode="numeric" field gets letters; a tel field gets its number pad.
+ * A number field: type="text" with inputMode (the kit's advice; type="number" has no caret, so
+ * backspace and edits misbehave). Phones get their own number keyboard ("." when `decimal`), and
+ * the kit's on-screen keyboard its number pad (kit 0.10.3+).
  */
 export function NumInput({ decimal, ...props }: InputHTMLAttributes<HTMLInputElement> & { decimal?: boolean }) {
-  const onScreen = useOnScreenKeyboard();
-  return <input autoComplete="off" {...props} type={onScreen ? "tel" : "text"} inputMode={decimal ? "decimal" : "numeric"} />;
+  return <input autoComplete="off" {...props} type="text" inputMode={decimal ? "decimal" : "numeric"} />;
 }
 
 /**

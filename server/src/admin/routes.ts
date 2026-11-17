@@ -1,5 +1,5 @@
 import express from "express";
-import { adminRouter as kitAdminRouter, bearerToken, createAdminAuth, log } from "@bargames/gamekit/server";
+import { adminRouter as kitAdminRouter, createAdminAuth, log } from "@bargames/gamekit/server";
 import { LIMITS, packToCsv, parsePack, type AdminSettings } from "@trivia/shared";
 import { ADMIN_PASSWORD, store } from "../config.js";
 import { ADMIN_CLOSE_REASON, listRooms, type Rooms } from "../rooms/registry.js";
@@ -28,25 +28,20 @@ export const adminAuth = createAdminAuth({
 const errorText = (err: unknown) => (err instanceof Error ? err.message : "Something went wrong.");
 
 /**
- * Uploads (packs and pictures): their own JSON limit, since the kit's admin router reads
- * bodies of 16 KB at most. Mounted at /api/admin/upload, before the kit's router.
+ * Uploads (packs and pictures) under /api/admin/upload. They ride on the kit's admin router,
+ * which checks the session and reads bodies up to UPLOAD_BODY_LIMIT (kit 0.9.0 bodyLimit).
  */
-export function uploadRouter(): express.Router {
-  const r = express.Router();
-  r.use(express.json({ limit: "6mb" }));
-  r.use((req, res, next) => {
-    if (!adminAuth.isValidSession(bearerToken(req))) return void res.status(401).json({ ok: false, error: "Sign in again." });
-    next();
-  });
+const UPLOAD_BODY_LIMIT = "6mb";
+function addUploadRoutes(r: express.Router): void {
   /** Checks a pack without saving it: what was read and every problem, by row. */
-  r.post("/packs/preview", (req, res) => {
+  r.post("/upload/packs/preview", (req, res) => {
     const text = String(req.body?.text ?? "");
     if (Buffer.byteLength(text) > LIMITS.packTextBytes) return void res.status(413).json({ ok: false, error: "That file is too big (2 MB at most)." });
     const parsed = parsePack(text);
     res.json({ ok: true, name: parsed.name, description: parsed.description, questions: parsed.questions, errors: parsed.errors });
   });
   /** Saves a pack (all of it must be valid), new or replacing `id`. */
-  r.post("/packs", async (req, res) => {
+  r.post("/upload/packs", async (req, res) => {
     try {
       const text = String(req.body?.text ?? "");
       if (Buffer.byteLength(text) > LIMITS.packTextBytes) throw new Error("That file is too big (2 MB at most).");
@@ -64,7 +59,7 @@ export function uploadRouter(): express.Router {
       res.status(400).json({ ok: false, error: errorText(err) });
     }
   });
-  r.post("/pictures", async (req, res) => {
+  r.post("/upload/pictures", async (req, res) => {
     try {
       const name = await savePicture(String(req.body?.name ?? ""), String(req.body?.data ?? ""), req.body?.replace === true);
       log.info("admin", "picture saved", { name });
@@ -73,14 +68,14 @@ export function uploadRouter(): express.Router {
       res.status(400).json({ ok: false, error: errorText(err) });
     }
   });
-  return r;
 }
 
 /** /api/admin/*: the kit's status, setup, login and logout, then the game's own pages. */
 export function adminRouter(rooms: Rooms): express.Router {
-  const r = kitAdminRouter({ auth: adminAuth, clientIp, trusted: (req) => bg.isStaff(req) });
+  const r = kitAdminRouter({ auth: adminAuth, clientIp, trusted: (req) => bg.isStaff(req), bodyLimit: UPLOAD_BODY_LIMIT });
 
   // Everything below needs a signed-in admin (the kit's router checks it).
+  addUploadRoutes(r);
   r.get("/overview", async (_req, res) => {
     res.json({
       rooms: listRooms(rooms),

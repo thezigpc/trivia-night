@@ -7,7 +7,7 @@ import { DEFAULT_GAME_NAME, type PublicConfig } from "@trivia/shared";
 import { installShutdown, log, serveSpa, SOCKET_SERVER_OPTIONS } from "@bargames/gamekit/server";
 import { CLIENT_DIST_PATH, PORT } from "./config.js";
 import { createRooms, defaultNightSpec } from "./rooms/registry.js";
-import { adminAuth, adminRouter, uploadRouter } from "./admin/routes.js";
+import { adminAuth, adminRouter } from "./admin/routes.js";
 import { getAdminSettings, initAdminSettings } from "./admin/settings.js";
 import { registerSocketHandlers, type IO } from "./socket/index.js";
 import { bg, displayName, registerBarGames } from "./bargames.js";
@@ -38,7 +38,6 @@ registerBarGames(rooms);
 app.get("/health", (_req, res) => {
   res.json({ ok: true, rooms: rooms.size });
 });
-app.use("/api/admin/upload", uploadRouter());
 app.use("/api/admin", adminRouter(rooms));
 
 /** The game's name (the venue's on a box), the defaults, and the packs (no answers). */

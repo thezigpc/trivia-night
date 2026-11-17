@@ -181,8 +181,8 @@ describe("on a box", () => {
 
     const result = await core.waitFor((e) => e.type === "game_result" && e.roomCode === code, "game_result");
     assert.deepEqual(result.data.results, [
-      { player: { name: "The Smarty Pints" }, place: 1, score: 1 },
-      { player: { name: "Quizteama Aguilera" }, place: 2, score: 0 },
+      { player: { name: "The Smarty Pints", team: true }, place: 1, score: 1 },
+      { player: { name: "Quizteama Aguilera", team: true }, place: 2, score: 0 },
     ]);
     const winner = await core.waitFor((e) => e.type === "winner" && e.roomCode === code, "winner");
     assert.equal(winner.data.name, "The Smarty Pints");

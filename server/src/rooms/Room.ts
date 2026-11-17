@@ -679,7 +679,8 @@ export class Room implements KitRoom {
     void bg
       .reportResults({
         roomCode: this.code,
-        results: rows.map((r) => ({ player: { name: r.name }, place: r.place, score: r.score })),
+        // SDK 0.16.0: team: true, so boards (Tournament & Leaderboard 0.4.1) keep team seasons apart.
+        results: rows.map((r) => ({ player: { name: r.name, team: true }, place: r.place, score: r.score })),
       })
       .catch(() => undefined);
     this.emit("winner", {
