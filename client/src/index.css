@@ -260,6 +260,11 @@ label.check {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
+.toast-top {
+  bottom: auto;
+  top: calc(var(--ann-top) + 70px);
+}
+
 /* ------------------------------------------------------------- pages */
 .center-page {
   min-height: calc(100vh - var(--ann-top) - var(--ann-bottom));
@@ -795,6 +800,9 @@ label.check {
   background: var(--no-bg);
   border-color: var(--no);
   color: var(--no);
+}
+.cell-form {
+  display: contents;
 }
 .small-input {
   width: 7em;

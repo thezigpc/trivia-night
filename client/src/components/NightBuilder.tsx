@@ -1,5 +1,7 @@
 import type { NightSpec, PackSummary, RoundSpec } from "@trivia/shared";
 import { SETTINGS_LIMITS } from "@trivia/shared";
+import { useEffect, useState } from "react";
+import { EnterForm, NumInput } from "./bits";
 
 /** A night from one pack: a round per category (up to 10 each), its final, a tie-breaker. */
 export function specFromPack(p: PackSummary | undefined): NightSpec {
@@ -48,7 +50,7 @@ export function NightBuilder({ packs, spec, onChange }: { packs: PackSummary[]; 
   const total = spec.rounds.reduce((n, r) => n + Math.min(r.count, available(packs, r)), 0);
 
   return (
-    <div className="night-builder">
+    <EnterForm className="night-builder">
       <div className="nb-quick">
         <label>
           Start from a whole pack
@@ -76,6 +78,7 @@ export function NightBuilder({ packs, spec, onChange }: { packs: PackSummary[]; 
                   value={r.title}
                   onChange={(e) => setRound(i, { title: e.target.value.slice(0, 60) })}
                   placeholder="Round title"
+                  maxLength={60}
                 />
                 <div className="nb-move">
                   <button type="button" className="icon-btn" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up" title="Move up">
@@ -137,13 +140,7 @@ export function NightBuilder({ packs, spec, onChange }: { packs: PackSummary[]; 
                     ))}
                 </select>
                 <label className="nb-count">
-                  <input
-                    type="number"
-                    min={1}
-                    max={Math.min(SETTINGS_LIMITS.questionsPerRound, Math.max(1, max))}
-                    value={r.count}
-                    onChange={(e) => setRound(i, { count: Math.max(1, Math.min(SETTINGS_LIMITS.questionsPerRound, Number(e.target.value) || 1)) })}
-                  />
+                  <CountInput value={r.count} max={SETTINGS_LIMITS.questionsPerRound} onChange={(count) => setRound(i, { count })} />
                   questions
                 </label>
               </div>
@@ -189,6 +186,26 @@ export function NightBuilder({ packs, spec, onChange }: { packs: PackSummary[]; 
         {spec.finalPackId ? ", a final" : ""}
         {spec.tiebreaker && anyTiebreak ? " and a tie-breaker" : ""}.
       </p>
-    </div>
+    </EnterForm>
+  );
+}
+
+/** A small whole number as typed (empty while editing is fine); saved when it is a number. */
+function CountInput({ value, max, onChange }: { value: number; max: number; onChange: (n: number) => void }) {
+  const [text, setText] = useState(String(value));
+  useEffect(() => setText(String(value)), [value]);
+  return (
+    <NumInput
+      maxLength={2}
+      value={text}
+      aria-label="Questions in this round"
+      onChange={(e) => {
+        const t = e.target.value.replace(/D/g, "");
+        setText(t);
+        const n = Number(t);
+        if (n >= 1) onChange(Math.min(max, n));
+      }}
+      onBlur={() => setText(String(value))}
+    />
   );
 }

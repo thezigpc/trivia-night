@@ -1,4 +1,5 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type InputHTMLAttributes, type ReactNode } from "react";
+import { useOnScreenKeyboard } from "@bargames/gamekit/client";
 import QRCode from "qrcode";
 import type { TimerView } from "@trivia/shared";
 import { loadKnownTeams, pictureUrl } from "../socket";
@@ -112,6 +113,39 @@ export function TeamNameField({
       )}
       {exact && exact !== value && <p className="muted small">Will play as “{exact}”, the name used here before.</p>}
     </div>
+  );
+}
+
+/**
+ * A number field. Phones, tablets and PCs get a text field with inputMode (their own number
+ * keyboard, with "." when `decimal`). Where GameKit's on-screen keyboard is up, it's
+ * type="tel": kit 0.10.0 sets inputmode="none" on focus and then reads that instead of the
+ * saved mode, so an inputMode="numeric" field gets letters; a tel field gets its number pad.
+ */
+export function NumInput({ decimal, ...props }: InputHTMLAttributes<HTMLInputElement> & { decimal?: boolean }) {
+  const onScreen = useOnScreenKeyboard();
+  return <input autoComplete="off" {...props} type={onScreen ? "tel" : "text"} inputMode={decimal ? "decimal" : "numeric"} />;
+}
+
+/**
+ * A form for fields that save on their own (on blur): Enter, or the on-screen keyboard's
+ * Enter key, finishes the field (blurs it, which saves it and closes the keyboard) instead
+ * of reloading the page.
+ */
+export function EnterForm({ children, className, onEnter }: { children: ReactNode; className?: string; onEnter?: () => void }) {
+  return (
+    <form
+      className={className}
+      onSubmit={(e) => {
+        e.preventDefault();
+        (document.activeElement as HTMLElement | null)?.blur();
+        onEnter?.();
+      }}
+    >
+      {children}
+      {/* Enter submits a form with more than one field only when it has a submit button. */}
+      <button type="submit" hidden tabIndex={-1} aria-hidden />
+    </form>
   );
 }
 

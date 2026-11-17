@@ -9,9 +9,9 @@
 - results with teams as players.
 
 - **SDK:** 0.15.0, vendored at `vendor/bargames-sdk-0.15.0.tgz`.
-- **GameKit:** 0.8.0, vendored at `vendor/bargames-gamekit-0.8.0.tgz`.
-- **Manifest:** [bargames.json](bargames.json), `trivia` 0.1.0, port 3010, image
-  `ghcr.io/thezigpc/trivia-night:0.1.0`.
+- **GameKit:** 0.10.0 (since 0.1.1), vendored at `vendor/bargames-gamekit-0.10.0.tgz`.
+- **Manifest:** [bargames.json](bargames.json), `trivia` 0.1.1, port 3010, image
+  `ghcr.io/thezigpc/trivia-night:0.1.1`.
 
 ```
 $ npx bargames validate .
@@ -207,9 +207,64 @@ standalone. It covered:
 The results: no page errors, no 4xx/5xx, no request outside `/trivia`, and the TV never
 scrolls.
 
+## On-screen keyboard (0.1.1, GameKit 0.10.0)
+
+Box 0.21.0 touchscreens have no keyboard, so the kit's `<OnScreenKeyboard />` is mounted once at
+the root (`client/src/main.tsx`). One app covers every page: join, host setup, the console, the
+TV (which has no fields) and the admin. Phones, tablets and PCs never see it.
+
+**Every field:**
+- is a real `<input>` or `<textarea>` with `maxLength`;
+- sits in a `<form>`, so Enter works. Fields that save on blur (score cells, guesses, wagers
+  typed by the coordinator, timers) use `EnterForm`, where Enter finishes the field and closes
+  the keyboard.
+
+**Number fields** (wagers, tie-breaker answers, score cells, timers, question counts) are
+`NumInput`:
+- a text field with `inputMode` (`numeric`, or `decimal` where "." is allowed);
+- `type="tel"` only while the on-screen keyboard is up.
+
+That works around a kit bug (see SDK requests), and it keeps the phones' own decimal keyboard.
+
+The number fields used to snap to their minimum when cleared. They now keep the typed text, so
+backspace-and-retype works.
+
+**Nothing is covered.**
+- The kit pads the page bottom.
+- The only fixed bottom element is the error toast, which moves to the top on keyboard screens
+  (`useOnScreenKeyboard()`).
+- A browser check confirmed that the focused field is above the keyboard every time, and that
+  nothing fixed or sticky overlaps it.
+
+**Checked** (scratchpad `e2e-keyboard.cjs`, mock box under `/trivia`, `?bg_keyboard=1`, every key
+tapped on the on-screen keyboard, at 1920×1080 and 3840×2160):
+- Host setup: the title, the timer (number pad, backspace and retype) and a round's question
+  count; Enter doesn't reload the page.
+- A team joins from a kiosk: the room code and team name, then Enter.
+- An open answer sent with Enter.
+- The tie-breaker on the number pad, including ".".
+- A wager: too big gives a toast, shown above the keyboard; then a valid one.
+- The console's score grid: the number pad, and Enter saves.
+- Adding a team.
+- The admin sign-in, submitted with Enter.
+- `?bg_keyboard=0` turns it off.
+
+Phones at 390 px without the flag show no keyboard, no padding and the same width. The 0.1.0
+walk-through still passes.
+
+At 4K with a 1× device scale, the page keeps its CSS size, so it looks small, while the keyboard
+fills the width. A 4K touchscreen normally runs at 2× scale.
+
 ## SDK requests
 
-1. **GameKit `adminRouter`'s body limit.** It parses every request with
+0. **GameKit 0.10.0: numeric fields get letters.** `OnScreenKeyboard` sets `inputmode="none"` on
+   focus and saves the original in `data-bg-inputmode`, but `wantsNumberPad()` reads
+   `getAttribute("inputmode") ?? dataset.bgInputmode`. `"none"` isn't null, so the saved mode is
+   never read: every `inputMode="numeric"`/`"decimal"` field gets the letter keyboard. Only
+   `type="number"`/`"tel"` get the number pad. Fix: read `dataset.bgInputmode` first, or treat
+   `"none"` as unset. The focus handler also never puts the original `inputmode` back on blur.
+   Trivia works around it with `type="tel"` while the keyboard is up.
+1. **GameKit `adminRouter`'s body limit** (done in kit 0.9.0; Trivia adopts it in a later version). It parses every request with
    `express.json({ limit: "16kb" })`, so a game's own admin routes that take uploads
    (question packs, pictures) can't hang off it. Trivia mounts its own upload router ahead of
    it, with its own session check. An option (`bodyLimit`, or not parsing bodies for routes

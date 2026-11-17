@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { useRoomConnection } from "@bargames/gamekit/client";
+import { useOnScreenKeyboard, useRoomConnection } from "@bargames/gamekit/client";
 import { isOnBox, tableMode, type TableModeController } from "@bargames/sdk/client";
 import type { JoinResult, RoomView } from "@trivia/shared";
 import { toggleFullscreen } from "../components/bits";
@@ -99,6 +99,8 @@ function Room({ code }: { code: string }) {
       }),
   });
   const { act, toast, setToast } = useAction();
+  // A touchscreen with the on-screen keyboard: the toast goes to the top, never under the keys.
+  const keyboard = useOnScreenKeyboard();
   useEffect(() => {
     const onNotice = (n: { message: string }) => setToast(n.message);
     socket.on("notice", onNotice);
@@ -207,7 +209,7 @@ function Room({ code }: { code: string }) {
       </header>
       {view.you.role === "team" ? <TeamView view={view} skew={skew} act={act} /> : <HostConsole view={view} skew={skew} act={act} venue={venue} />}
       {toast && (
-        <div className="toast" role="alert" onClick={() => setToast(null)}>
+        <div className={`toast ${keyboard ? "toast-top" : ""}`} role="alert" onClick={() => setToast(null)}>
           {toast}
         </div>
       )}

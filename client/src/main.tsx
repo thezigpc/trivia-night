@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { basePath, ErrorBoundary, VenueAnnouncement } from "@bargames/gamekit/client";
+import { basePath, ErrorBoundary, OnScreenKeyboard, VenueAnnouncement } from "@bargames/gamekit/client";
 import { AdminPage } from "./pages/AdminPage";
 import { HomePage } from "./pages/HomePage";
 import { HostPage } from "./pages/HostPage";
@@ -34,6 +34,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      {/* GameKit 0.10.0: big keys under a focused field on a touchscreen with no keyboard of its
+          own (box 0.21.0's touch screens). Hidden on phones, tablets and PCs. One app covers
+          every page: join, host setup, console, TV and admin. */}
+      <OnScreenKeyboard />
     </ErrorBoundary>
   </React.StrictMode>,
 );

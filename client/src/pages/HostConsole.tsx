@@ -9,7 +9,7 @@ import {
   type RoomView,
   type Screen,
 } from "@trivia/shared";
-import { fmtScore, ordinal, Picture, Qr, TeamNameField, useSecondsLeft } from "../components/bits";
+import { EnterForm, fmtScore, ordinal, Picture, Qr, TeamNameField, useSecondsLeft, NumInput } from "../components/bits";
 import { NightBuilder } from "../components/NightBuilder";
 import { useConfig } from "../config";
 import { basePath } from "@bargames/gamekit/client";
@@ -333,16 +333,19 @@ function GuessInput({ value, onSave, disabled }: { value: string; onSave: (v: st
   const [v, setV] = useState(value);
   useEffect(() => setV(value), [value]);
   return (
-    <input
-      className="small-input"
-      inputMode="decimal"
-      value={v}
-      disabled={disabled}
-      placeholder="guess"
-      onChange={(e) => setV(e.target.value)}
-      onBlur={() => v !== value && onSave(v)}
-      onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
-    />
+    <EnterForm className="cell-form">
+      <NumInput
+        className="small-input"
+        decimal
+        maxLength={12}
+        autoComplete="off"
+        value={v}
+        disabled={disabled}
+        placeholder="guess"
+        onChange={(e) => setV(e.target.value)}
+        onBlur={() => v !== value && onSave(v)}
+      />
+    </EnterForm>
   );
 }
 
@@ -459,9 +462,12 @@ function ScoreCell({
   const [v, setV] = useState(shown);
   useEffect(() => setV(shown), [shown]);
   return (
-    <input
+    <EnterForm className="cell-form">
+    <NumInput
       className={`score-input ${value !== undefined ? "override" : ""}`}
-      inputMode="decimal"
+      decimal
+      maxLength={8}
+      autoComplete="off"
       value={v}
       placeholder={fmtScore(fromMarks)}
       disabled={disabled}
@@ -473,8 +479,8 @@ function ScoreCell({
         else if (Number.isFinite(Number(v))) onSave(Number(v));
         else setV(shown);
       }}
-      onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
     />
+    </EnterForm>
   );
 }
 
@@ -630,13 +636,21 @@ function SetupTab({ view, act }: { view: RoomView; act: Act }) {
           {view.settings.mode === "phones" && (
             <label>
               Seconds to answer
-              <input
-                type="number"
-                min={SETTINGS_LIMITS.timerSeconds.min}
-                max={SETTINGS_LIMITS.timerSeconds.max}
-                defaultValue={view.settings.timerSeconds}
-                onBlur={(e) => Number(e.target.value) !== view.settings.timerSeconds && act("updateSettings", { timerSeconds: Number(e.target.value) })}
-              />
+              <EnterForm className="cell-form">
+                <NumInput
+                  maxLength={3}
+                  autoComplete="off"
+                  defaultValue={view.settings.timerSeconds}
+                  key={view.settings.timerSeconds}
+                  aria-label={`Seconds to answer (${SETTINGS_LIMITS.timerSeconds.min} to ${SETTINGS_LIMITS.timerSeconds.max})`}
+                  onBlur={(e) => {
+                    const n = Number(e.target.value);
+                    const { min, max } = SETTINGS_LIMITS.timerSeconds;
+                    if (!Number.isInteger(n) || n < min || n > max) e.target.value = String(view.settings.timerSeconds);
+                    else if (n !== view.settings.timerSeconds) act("updateSettings", { timerSeconds: n });
+                  }}
+                />
+              </EnterForm>
             </label>
           )}
         </div>

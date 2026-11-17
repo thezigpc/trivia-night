@@ -111,6 +111,8 @@ export function HomePage() {
             placeholder="ABCD"
             autoCapitalize="characters"
             inputMode="text"
+            maxLength={8}
+            autoComplete="off"
           />
         </label>
         {paper ? (

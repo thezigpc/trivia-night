@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import type { RoomView } from "@trivia/shared";
-import { fmtScore, ordinal, Picture, TimerRing } from "../components/bits";
+import { fmtScore, ordinal, Picture, TimerRing, NumInput } from "../components/bits";
 import type { Act } from "./RoomPage";
 
 const LETTERS = "ABCDEF";
@@ -104,15 +104,19 @@ export function TeamView({ view, skew, act }: { view: RoomView; skew: number; ac
               </div>
             ) : (
               <form className="answer-form" onSubmit={submitText}>
-                <input
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder={q.type === "number" ? "A number" : "Your answer"}
-                  inputMode={q.type === "number" ? "decimal" : "text"}
-                  maxLength={200}
-                  autoComplete="off"
-                  autoFocus
-                />
+                {q.type === "number" ? (
+                  <NumInput decimal value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="A number" maxLength={20} autoFocus />
+                ) : (
+                  <input
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    placeholder="Your answer"
+                    inputMode="text"
+                    maxLength={200}
+                    autoComplete="off"
+                    autoFocus
+                  />
+                )}
                 <button className="btn btn-primary" disabled={!draft.trim()}>
                   {sent ? "Change" : "Send"}
                 </button>
@@ -136,14 +140,13 @@ export function TeamView({ view, skew, act }: { view: RoomView; skew: number; ac
         <h2 className="big">{view.wager?.category}</h2>
         {view.wager?.open ? (
           <form className="answer-form" onSubmit={sendWager}>
-            <input
-              type="number"
-              min={0}
-              max={mine.maxWager ?? 0}
+            <NumInput
               value={wager}
-              onChange={(e) => setWager(e.target.value)}
+              onChange={(e) => setWager(e.target.value.replace(/[^\d.]/g, ""))}
               placeholder={`0 to ${fmtScore(mine.maxWager ?? 0)}`}
-              inputMode="numeric"
+              decimal
+              maxLength={8}
+              autoComplete="off"
             />
             <button className="btn btn-primary" disabled={wager === ""}>
               {mine.wager !== undefined ? "Change wager" : "Wager"}

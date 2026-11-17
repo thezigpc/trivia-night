@@ -1,3 +1,4 @@
+import { NumInput } from "../components/bits";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { BoxAdminLink, invalidatePublicConfig, staffSignIn } from "@bargames/gamekit/client";
@@ -154,12 +155,12 @@ function PasswordForm({ status, onToken }: { status: AdminStatus; onToken: (t: s
       )}
       <label>
         Password
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={setup ? "new-password" : "current-password"} autoFocus />
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} maxLength={200} autoComplete={setup ? "new-password" : "current-password"} autoFocus />
       </label>
       {setup && (
         <label>
           Confirm password
-          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" />
+          <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} maxLength={200} autoComplete="new-password" />
         </label>
       )}
       {error && <p className="error">{error}</p>}
@@ -545,6 +546,12 @@ function TeamsPanel({ teams, call }: { teams: KnownTeam[]; call: Call }) {
   );
 }
 
+/** A whole number as typed; NaN while the field is empty (the server refuses it with a reason). */
+const numberOrNaN = (t: string): number => {
+  const d = t.replace(/D/g, "");
+  return d === "" ? NaN : Number(d);
+};
+
 function SettingsPanel({ settings, call }: { settings: AdminSettings; call: Call }) {
   const [s, setS] = useState(settings);
   useEffect(() => setS(settings), [settings]);
@@ -552,6 +559,13 @@ function SettingsPanel({ settings, call }: { settings: AdminSettings; call: Call
   return (
     <section className="panel">
       <h2>Defaults for new rooms</h2>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          (document.activeElement as HTMLElement | null)?.blur();
+          if (dirty) void call("/settings", "PUT", s);
+        }}
+      >
       <div className="setup-row">
         <label>
           Teams answer
@@ -569,28 +583,27 @@ function SettingsPanel({ settings, call }: { settings: AdminSettings; call: Call
         </label>
         <label>
           Seconds to answer
-          <input
-            type="number"
-            min={SETTINGS_LIMITS.timerSeconds.min}
-            max={SETTINGS_LIMITS.timerSeconds.max}
-            value={s.defaultTimerSeconds}
-            onChange={(e) => setS({ ...s, defaultTimerSeconds: Number(e.target.value) })}
+          <NumInput
+            maxLength={3}
+            aria-label={`Seconds to answer (${SETTINGS_LIMITS.timerSeconds.min} to ${SETTINGS_LIMITS.timerSeconds.max})`}
+            value={Number.isNaN(s.defaultTimerSeconds) ? "" : s.defaultTimerSeconds}
+            onChange={(e) => setS({ ...s, defaultTimerSeconds: numberOrNaN(e.target.value) })}
           />
         </label>
         <label>
           Close idle rooms after (minutes)
-          <input
-            type="number"
-            min={ADMIN_SETTINGS_LIMITS.roomIdleMinutes.min}
-            max={ADMIN_SETTINGS_LIMITS.roomIdleMinutes.max}
-            value={s.roomIdleMinutes}
-            onChange={(e) => setS({ ...s, roomIdleMinutes: Number(e.target.value) })}
+          <NumInput
+            maxLength={5}
+            aria-label={`Close idle rooms after (${ADMIN_SETTINGS_LIMITS.roomIdleMinutes.min} to ${ADMIN_SETTINGS_LIMITS.roomIdleMinutes.max} minutes)`}
+            value={Number.isNaN(s.roomIdleMinutes) ? "" : s.roomIdleMinutes}
+            onChange={(e) => setS({ ...s, roomIdleMinutes: numberOrNaN(e.target.value) })}
           />
         </label>
       </div>
-      <button className="btn btn-primary" disabled={!dirty} onClick={() => call("/settings", "PUT", s)}>
+      <button className="btn btn-primary" disabled={!dirty}>
         Save
       </button>
+      </form>
     </section>
   );
 }
