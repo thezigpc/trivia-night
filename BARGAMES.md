@@ -9,7 +9,7 @@
 - results with teams as players.
 
 - **SDK:** 0.15.0, vendored at `vendor/bargames-sdk-0.15.0.tgz`.
-- **GameKit:** 0.10.0 (since 0.1.1), vendored at `vendor/bargames-gamekit-0.10.0.tgz`.
+- **GameKit:** 0.10.2 (since 0.1.1), vendored at `vendor/bargames-gamekit-0.10.2.tgz`.
 - **Manifest:** [bargames.json](bargames.json), `trivia` 0.1.1, port 3010, image
   `ghcr.io/thezigpc/trivia-night:0.1.1`.
 
@@ -207,7 +207,7 @@ standalone. It covered:
 The results: no page errors, no 4xx/5xx, no request outside `/trivia`, and the TV never
 scrolls.
 
-## On-screen keyboard (0.1.1, GameKit 0.10.0)
+## On-screen keyboard (0.1.1, GameKit 0.10.2)
 
 Box 0.21.0 touchscreens have no keyboard, so the kit's `<OnScreenKeyboard />` is mounted once at
 the root (`client/src/main.tsx`). One app covers every page: join, host setup, the console, the
@@ -257,7 +257,7 @@ fills the width. A 4K touchscreen normally runs at 2× scale.
 
 ## SDK requests
 
-0. **GameKit 0.10.0: numeric fields get letters.** `OnScreenKeyboard` sets `inputmode="none"` on
+0. **GameKit 0.10.0-0.10.2: numeric fields get letters.** `OnScreenKeyboard` sets `inputmode="none"` on
    focus and saves the original in `data-bg-inputmode`, but `wantsNumberPad()` reads
    `getAttribute("inputmode") ?? dataset.bgInputmode`. `"none"` isn't null, so the saved mode is
    never read: every `inputMode="numeric"`/`"decimal"` field gets the letter keyboard. Only
