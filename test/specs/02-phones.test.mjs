@@ -180,8 +180,10 @@ describe("phones mode", () => {
     const after = await host.emit("ask", "r1q1");
     assert.equal(after.ok, false);
 
-    // The night's teams are now known at this venue.
-    const known = await (await fetch(`${server.url}/api/teams`)).json();
+    // The night's teams are now known at this venue (saved in the background after finishing).
+    const teamsNow = async () => (await (await fetch(`${server.url}/api/teams`)).json()).teams;
+    for (const end = Date.now() + 3000; (await teamsNow()).length < 3 && Date.now() < end; ) await new Promise((r) => setTimeout(r, 25));
+    const known = { teams: await teamsNow() };
     assert.deepEqual(known.teams.sort(), ["Alpha", "Bravo", "Charlie"]);
     void code;
   });
